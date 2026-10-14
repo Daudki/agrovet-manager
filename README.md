@@ -1,0 +1,121 @@
+# Agrovet Manager
+
+Inventory, sales and expiry management built specifically for agrovet shops (agricultural inputs and veterinary supplies).
+Multi-tenant: every shop registers its own account and only ever sees its own data.
+
+**Stack:** React 18 + Vite (client) · Node.js + Express (API) · SQLite (built-in `node:sqlite`, no native build step).
+
+## Features
+
+| Area | What you get |
+| --- | --- |
+| **Accounts** | Register / sign in, private workspace per shop, httpOnly cookie sessions, change password, sign out on all devices |
+| **Products** | Full CRUD, categories, suppliers, SKU & barcode, units, cost/selling price with live margin, reorder levels, active ingredients, free-form specifications (e.g. sprayer capacity), archive & restore, CSV export |
+| **Batch-level stock** | Every receipt is a batch with its own cost and expiry date. Stock is always derived from batches, never typed in by hand |
+| **FEFO selling** | Sales take stock from the earliest-expiring batch first; expired stock can never be sold |
+| **Alerts** | Out of stock, low stock, expiring soon (configurable window), expired — on the dashboard and as sidebar badges |
+| **Alternatives** | Search by name or active ingredient and see in-stock alternatives that share an ingredient |
+| **Point of sale** | Touch-friendly catalogue, barcode-scanner friendly, price override, discounts, 5 payment methods, credit / part-payment, printable receipts |
+| **Sales history** | Filters, totals, receipts, void a sale (stock is restored to the original batches) |
+| **Purchases** | Multi-line goods-received notes, supplier tracking, void while untouched |
+| **Stock control** | Stock counts, write-offs with reasons, full stock ledger (audit trail) |
+| **Customers** | Balances, credit sales, payment recording (settles oldest sale first), purchase history |
+| **Expenses** | Categorised running costs deducted from profit |
+| **Reports** | Profit & loss (revenue − cost of goods − expenses), margins, best sellers, payment mix, category mix, inventory valuation (cost vs retail), CSV exports |
+| **UX** | Dark mode, responsive down to phones (tables become cards, cart becomes a bottom sheet), installable PWA, keyboard `/` to search |
+
+## Quick start
+
+Requires **Node.js ≥ 22.13** (for the built-in SQLite module).
+
+```bash
+npm install
+cp .env.example .env        # optional in development
+npm run dev
+```
+
+* Web app: http://localhost:5173 (Vite proxies `/api` to the API)
+* API: http://localhost:4000
+
+Open the app, choose **Create your shop account**, and tick *Load sample data* to explore with realistic products, sales and expiry alerts.
+
+### Production
+
+```bash
+npm run build               # builds client/dist
+JWT_SECRET=$(openssl rand -hex 32) npm start
+```
+
+In production the API serves the built web app on a single port. Serve it behind HTTPS (the session cookie is `Secure` in production; set `COOKIE_SECURE=false` only to test a production build on plain `http://localhost`).
+
+Or with Docker:
+
+```bash
+docker build -t agrovet-manager .
+docker run -p 4000:4000 -e JWT_SECRET=change-me -e COOKIE_SECURE=false -v agrovet-data:/data agrovet-manager
+```
+
+Back up by copying the SQLite file (`DATABASE_PATH`, default `server/data/agrovet.db`).
+
+## Configuration
+
+See [`.env.example`](.env.example). `JWT_SECRET` is **required** in production.
+
+## Project layout
+
+```
+server/
+  src/
+    schema.js          ordered SQL migrations (PRAGMA user_version)
+    db.js              connection + re-entrant transactions
+    services/          all business logic (framework-free, unit-tested)
+    routes/            Express routes + zod validation
+    middleware/        auth (JWT cookie), error handling
+  tests/               node:test – service tests + HTTP integration tests
+client/
+  src/
+    pages/             one file per screen
+    components/        modals, drawers, tables, charts (hand-rolled SVG), pickers
+    context/           auth + theme
+    lib/               API client, hooks, formatters
+    styles/global.css  design system (CSS variables, light/dark)
+```
+
+## How the important rules work
+
+* **Tenant isolation** – every business table has `account_id`, services receive the signed-in account and every query filters by it. Foreign ids supplied by a client (category, supplier, product, customer…) are verified to belong to the same account. Covered by tests.
+* **Stock** – `batches.quantity` is the single source of truth. Every change also writes a signed row to `stock_movements`, so the ledger always adds up to the stock on hand (asserted in tests).
+* **Money & profit** – revenue is the sale total; cost of goods comes from the actual batch costs consumed by each sale; net profit = gross profit − expenses. Voided sales are excluded everywhere.
+* **Dates** – sales/expenses/purchases are stamped with the shop's local calendar day (configurable time zone), so late-evening sales land on the right day.
+* **Deleting** – products that have ever been sold or purchased are archived rather than deleted so history stays correct.
+
+## API overview
+
+All routes except `/api/auth/*` require a session. JSON in, JSON out; validation errors return `400 { error, details: { fields } }`.
+
+```
+POST /api/auth/register | login | logout     GET /api/auth/me
+PATCH /api/account   POST /api/account/password | sign-out-everywhere | demo-data
+GET /api/dashboard   /api/alerts   /api/search?q=   /api/reports/sales?from&to   /api/reports/inventory
+CRUD /api/categories  /api/suppliers  /api/customers  /api/expenses  (+ POST /api/customers/:id/payments)
+CRUD /api/products    POST /api/products/:id/archive | restore   GET /api/products/:id/alternatives
+GET/POST /api/purchases   POST /api/purchases/:id/void
+GET /api/stock/batches  /api/stock/movements   POST /api/stock/adjust
+GET/POST /api/sales   POST /api/sales/:id/void
+GET /api/export/products.csv | sales.csv | expenses.csv | movements.csv
+```
+
+## Tests
+
+```bash
+npm test
+```
+
+`server/tests/services.test.js` covers FEFO allocation, overselling rollback, voids, credit settlement, purchases, adjustments, expiry classification, P&L maths, tenant isolation and a ledger-integrity check on the demo data. `api.test.js` exercises the HTTP layer (auth, validation, isolation, CSV export).
+
+## Notes & limitations
+
+* Single owner per account (no staff roles yet).
+* Passwords are hashed with bcrypt; there is no email-based password reset (needs an email provider).
+* Voiding a sale restores stock but does not track refunds of money already collected.
+* SQLite is ideal for a shop or a few hundred shops on one server; move to PostgreSQL if you need multiple app servers.
