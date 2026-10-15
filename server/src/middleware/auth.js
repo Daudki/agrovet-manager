@@ -34,7 +34,7 @@ const cookieOptions = () => ({
   sameSite: 'lax',
   secure: config.cookieSecure,
   path: '/',
-  maxAge: config.sessionDays * 86400 * 1000,
+  /**maxAge: config.sessionDays * 86400 * 1000,**/
 });
 
 /** Resolves the logged-in account into req.acct. Every service call is scoped by it. */
