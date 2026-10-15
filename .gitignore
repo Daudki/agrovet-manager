@@ -1,13 +1,33 @@
+# Dependencies
 node_modules/
+
+# Build output
 client/dist/
+dist/
+coverage/
+
+# Secrets: never commit these
 .env
 .env.*
 !.env.example
+
+# Database files
 server/data/*.db
 server/data/*.db-shm
 server/data/*.db-wal
+*.sqlite
+*.sqlite3
+
+# Logs and caches
+*.log
 npm-debug.log*
-.DS_Store
+.npm/
+.cache/
+.vite/
+
+# Editors and OS
 .vscode/
 .idea/
-*.log
+.DS_Store
+Thumbs.db
+*.swp
