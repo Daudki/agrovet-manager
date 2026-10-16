@@ -1,0 +1,20 @@
+# Render Blueprint – one always-on web service with a persistent disk for the SQLite database.
+# Render dashboard → New → Blueprint → pick this repository.
+services:
+  - type: web
+    name: agrovet-manager
+    runtime: docker
+    plan: starter            # free instances sleep and cannot have a disk – do not use them for real data
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: agrovet-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /data/agrovet.db
+      - key: JWT_SECRET
+        generateValue: true  # random 256-bit secret, created once and kept

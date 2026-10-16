@@ -16,6 +16,7 @@
     "build": "npm run build -w client",
     "start": "NODE_ENV=production npm start -w server",
     "test": "npm test -w server",
+    "backup": "npm run backup -w server --",
     "i18n:check": "npm run i18n:check -w client"
   },
   "devDependencies": {

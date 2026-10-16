@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node --disable-warning=ExperimentalWarning --watch src/index.js",
     "start": "node --disable-warning=ExperimentalWarning src/index.js",
+    "backup": "node --disable-warning=ExperimentalWarning scripts/backup.js",
     "test": "node --disable-warning=ExperimentalWarning --test \"tests/**/*.test.js\""
   },
   "dependencies": {
