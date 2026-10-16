@@ -20,12 +20,12 @@ function readCookie(req, name) {
   return null;
 }
 
-const cookieOptions = () => ({
+// Attributes that must match between setting and clearing a cookie, or the browser keeps the old one.
+export const cookieBase = () => ({
   httpOnly: true,
   sameSite: 'lax',
   secure: config.cookieSecure,
   path: '/',
-  maxAge: config.sessionDays * 86400 * 1000,
 });
 
 export function issueSession(res, user) {
@@ -33,10 +33,11 @@ export function issueSession(res, user) {
     subject: String(user.id),
     expiresIn: `${config.sessionDays}d`,
   });
-  res.cookie(config.cookieName, token, cookieOptions());
+  res.cookie(config.cookieName, token, { ...cookieBase(), maxAge: config.sessionDays * 86400 * 1000 });
 }
 
-export const clearSession = (res) => res.clearCookie(config.cookieName, cookieOptions());
+// No maxAge here: Express expires the cookie itself (passing maxAge is deprecated and ignored in Express 5).
+export const clearSession = (res) => res.clearCookie(config.cookieName, cookieBase());
 
 /** Resolves the signed-in login into req.user and its shop into req.acct. Every service call is scoped by req.acct. */
 export function requireAuth(req, _res, next) {
