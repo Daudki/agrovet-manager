@@ -2,6 +2,7 @@
    Placeholders {0}, {1}… are filled in by t(). Keep them in every translation.
    Run `npm run i18n:check -w client` after adding UI text. */
 export const sw = {
+ "Could not sign out. Check your connection and try again.": "Imeshindwa kutoka. Kagua mtandao wako kisha ujaribu tena.",
  "You don’t have access to this page": "Huna ruhusa ya kufungua ukurasa huu",
  "Ask the shop owner if you need it.": "Mwombe mmiliki wa duka ikiwa unauhitaji.",
  "Breakdown": "Mgawanyo",

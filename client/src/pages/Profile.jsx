@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { LogOut } from 'lucide-react';
 import { Badge, Field, PageHead, Spinner } from '../components/ui.jsx';
 import LanguageSwitch from '../components/LanguageSwitch.jsx';
+import SignOutButton from '../components/SignOutButton.jsx';
 import { useConfirm } from '../components/Modal.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -32,8 +33,13 @@ export default function Profile() {
 
   const signOutAll = async () => {
     if (!(await confirm({ title: t('Sign out everywhere?'), message: t('You’ll be signed out on this device and every other device.'), confirmText: t('Sign out everywhere') }))) return;
-    await api.post('/account/sign-out-everywhere').catch(() => {});
-    await logout();
+    try {
+      await api.post('/account/sign-out-everywhere');
+    } catch (ex) {
+      toast.error(ex.message);
+      return;
+    }
+    await logout().catch(() => {}); // the server already ended every session
   };
 
   return (
@@ -44,6 +50,7 @@ export default function Profile() {
           <div className="avatar" style={{ width: 46, height: 46, fontSize: 16 }}>{user.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</div>
           <div className="grow"><b>{user.name}</b><div className="cell-sub">{user.email} · {account.shop_name}</div></div>
           <Badge tone={user.role === 'owner' ? 'info' : user.role === 'manager' ? 'ok' : ''}>{t(ROLE_LABEL[user.role])}</Badge>
+          <SignOutButton className="btn sm" showLabel size={15} />
         </div>
 
         <div className="card card-pad row between wrap">

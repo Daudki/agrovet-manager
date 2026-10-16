@@ -22,7 +22,8 @@ export function AuthProvider({ children }) {
   // Registering creates the shop but does not sign in – the caller sends the person to the login page.
   const register = useCallback((body) => api.post('/auth/register', body), []);
   const logout = useCallback(async () => {
-    try { await api.post('/auth/logout'); } finally { setS(EMPTY); }
+    await api.post('/auth/logout'); // throws if the server can't be reached – the session is then still active
+    setS(EMPTY);
   }, []);
   const setAccount = useCallback((account) => setS((x) => ({ ...x, account })), []);
   const can = useCallback((perm) => s.permissions.includes(perm), [s.permissions]);

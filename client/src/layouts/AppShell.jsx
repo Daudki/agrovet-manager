@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
-  BarChart3, Boxes, LayoutDashboard, LogOut, Menu, Moon, Package, Receipt, Search, Settings,
+  BarChart3, Boxes, LayoutDashboard, Menu, Moon, Package, Receipt, Search, Settings,
   ShoppingCart, Sun, Tags, Truck, Users, UserCog, Wallet, Plus, PackagePlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -11,6 +11,7 @@ import { initials } from '../lib/format.js';
 import { useApi, useDebounced, useOnChange } from '../lib/hooks.js';
 import { Badge } from '../components/ui.jsx';
 import LanguageSwitch from '../components/LanguageSwitch.jsx';
+import SignOutButton from '../components/SignOutButton.jsx';
 
 import { t } from '../lib/i18n.js';
 // `perm` hides an item from roles that can't use it.
@@ -99,7 +100,7 @@ function GlobalSearch() {
 }
 
 export default function AppShell({ children }) {
-  const { account, user, can, logout } = useAuth();
+  const { account, user, can } = useAuth();
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
@@ -140,7 +141,7 @@ export default function AppShell({ children }) {
             <div className="avatar">{initials(user.name)}</div>
             <div><b className="truncate" style={{ display: 'block' }}>{user.name}</b><small className="truncate" style={{ display: 'block' }}>{t(ROLE_LABEL[user.role])} · {user.email}</small></div>
           </NavLink>
-          <button onClick={async () => { await logout(); nav('/login'); }} aria-label={t('Sign out')} title={t('Sign out')}><LogOut size={17} /></button>
+          <SignOutButton className="" size={17} />
         </div>
       </aside>
       <div className={`scrim ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
@@ -151,6 +152,7 @@ export default function AppShell({ children }) {
           <div className="grow" />
           <LanguageSwitch />
           <button className="btn ghost icon" onClick={toggle} aria-label={t('Toggle dark mode')} title={t('Toggle theme')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
+          <SignOutButton className="btn ghost icon" />
           {can('sell') && <button className="btn primary" onClick={() => nav('/pos')}><Plus size={16} /> <span className="hide-sm">{t('New sale')}</span></button>}
         </header>
         <main className="content">{children}</main>
