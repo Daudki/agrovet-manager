@@ -4,15 +4,24 @@
   "private": true,
   "description": "Multi-tenant inventory, sales and expiry management for agrovet shops.",
   "license": "MIT",
-  "engines": { "node": ">=22.13.0" },
-  "workspaces": ["server", "client"],
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
     "dev": "concurrently -k -n api,web -c green,cyan \"npm run dev -w server\" \"npm run dev -w client\"",
     "build": "npm run build -w client",
     "start": "NODE_ENV=production npm start -w server",
-    "test": "npm test -w server"
+    "test": "npm test -w server",
+    "i18n:check": "npm run i18n:check -w client"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
   }
 }

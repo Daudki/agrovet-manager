@@ -1,5 +1,7 @@
 import { CheckCircle2 } from 'lucide-react';
+import LanguageSwitch from '../components/LanguageSwitch.jsx';
 
+import { t } from '../lib/i18n.js';
 const POINTS = [
   'Batch-level stock with automatic first-expiry-first-out selling',
   'Expiry and low-stock alerts before they cost you money',
@@ -11,16 +13,19 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <div className="auth">
       <section className="auth-art">
-        <div className="brand-inline" style={{ color: '#fff' }}><img src="/favicon.svg" alt="" /> Agrovet Manager</div>
+        <div className="brand-inline" style={{ color: '#fff' }}><img src="/favicon.svg" alt="" /> {t('Agrovet Manager')}</div>
         <div>
-          <h2>Run your agrovet with confidence.</h2>
+          <h2>{t('Run your agrovet with confidence.')}</h2>
           <ul>{POINTS.map((p) => <li key={p}><CheckCircle2 size={18} /> {p}</li>)}</ul>
         </div>
-        <small style={{ color: 'rgba(236,245,238,.5)' }}>Every shop gets its own private workspace.</small>
+        <small style={{ color: 'rgba(236,245,238,.5)' }}>{t('Every shop gets its own private workspace.')}</small>
       </section>
       <section className="auth-form">
         <div className="auth-card">
-          <div className="brand-inline" style={{ marginBottom: 28 }}><img src="/favicon.svg" alt="" /> Agrovet Manager</div>
+          <div className="row between" style={{ marginBottom: 28 }}>
+            <div className="brand-inline"><img src="/favicon.svg" alt="" /> {t('Agrovet Manager')}</div>
+            <LanguageSwitch />
+          </div>
           <h1>{title}</h1>
           <p className="sub">{subtitle}</p>
           {children}

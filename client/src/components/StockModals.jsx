@@ -6,6 +6,7 @@ import { useFmt } from '../context/AuthContext.jsx';
 import { api } from '../lib/api.js';
 import { useApi } from '../lib/hooks.js';
 
+import { t } from '../lib/i18n.js';
 const numOrUndef = (v) => (v === '' || v === null || v === undefined ? undefined : Number(v));
 
 /** Receive stock for one product as a single-line purchase. */
@@ -31,7 +32,7 @@ export function ReceiveStockModal({ product, onClose, onDone }) {
           batch_number: f.batch_number, expiry_date: f.expiry_date || null,
         }],
       });
-      toast.success(`Received ${num(f.quantity)} ${product.unit} of ${product.name}`);
+      toast.success(t('Received {0} {1} of {2}', [num(f.quantity), product.unit, product.name]));
       onDone?.(); onClose();
     } catch (ex) {
       setErr(ex);
@@ -40,19 +41,19 @@ export function ReceiveStockModal({ product, onClose, onDone }) {
 
   const fe = (k) => err?.fields?.[`items.0.${k}`];
   return (
-    <Modal title={`Receive stock · ${product.name}`} onClose={onClose} size="sm"
-      footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" form="recv" disabled={busy}>{busy ? <Spinner /> : 'Receive stock'}</button></>}>
+    <Modal title={t('Receive stock · {0}', [product.name])} onClose={onClose} size="sm"
+      footer={<><button className="btn" onClick={onClose}>{t('Cancel')}</button><button className="btn primary" form="recv" disabled={busy}>{busy ? <Spinner /> : t('Receive stock')}</button></>}>
       <form id="recv" className="stack-v" onSubmit={submit}>
         {err && !err.fields && <div className="alert danger">{err.message}</div>}
         <div className="form-grid">
-          <Field label={`Quantity (${product.unit})`} error={fe('quantity')}><input className="input" type="number" step="any" min="0" value={f.quantity} onChange={set('quantity')} required autoFocus /></Field>
-          <Field label="Unit cost" error={fe('unit_cost')}><input className="input" type="number" step="any" min="0" value={f.unit_cost} onChange={set('unit_cost')} required /></Field>
-          <Field label="Batch / lot no."><input className="input" value={f.batch_number} onChange={set('batch_number')} placeholder="Auto if blank" /></Field>
-          <Field label="Expiry date" error={fe('expiry_date')}><input className="input" type="date" value={f.expiry_date} onChange={set('expiry_date')} /></Field>
+          <Field label={t('Quantity ({0})', [product.unit])} error={fe('quantity')}><input className="input" type="number" step="any" min="0" value={f.quantity} onChange={set('quantity')} required autoFocus /></Field>
+          <Field label={t('Unit cost')} error={fe('unit_cost')}><input className="input" type="number" step="any" min="0" value={f.unit_cost} onChange={set('unit_cost')} required /></Field>
+          <Field label={t('Batch / lot no.')}><input className="input" value={f.batch_number} onChange={set('batch_number')} placeholder={t('Auto if blank')} /></Field>
+          <Field label={t('Expiry date')} error={fe('expiry_date')}><input className="input" type="date" value={f.expiry_date} onChange={set('expiry_date')} /></Field>
         </div>
-        <Field label="Supplier">
+        <Field label={t('Supplier')}>
           <select className="select" value={f.supplier_id} onChange={set('supplier_id')}>
-            <option value="">— None —</option>
+            <option value="">{t('— None —')}</option>
             {suppliers.data?.items.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </Field>
@@ -81,34 +82,34 @@ export function AdjustModal({ batch, onClose, onDone }) {
         batch_id: batch.id, type: mode, reason: mode === 'count' ? 'Stock count' : reason, note,
         ...(mode === 'count' ? { counted: numOrUndef(counted) } : { quantity: numOrUndef(qty) }),
       });
-      toast.success(mode === 'count' ? 'Stock count recorded' : 'Stock written off');
+      toast.success(mode === 'count' ? t('Stock count recorded') : t('Stock written off'));
       onDone?.(); onClose();
     } catch (ex) { setErr(ex); } finally { setBusy(false); }
   };
 
   return (
-    <Modal title="Adjust stock" onClose={onClose} size="sm"
-      footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" form="adj" disabled={busy}>{busy ? <Spinner /> : 'Save adjustment'}</button></>}>
+    <Modal title={t('Adjust stock')} onClose={onClose} size="sm"
+      footer={<><button className="btn" onClick={onClose}>{t('Cancel')}</button><button className="btn primary" form="adj" disabled={busy}>{busy ? <Spinner /> : t('Save adjustment')}</button></>}>
       <form id="adj" className="stack-v" onSubmit={submit}>
         <div className="card card-pad" style={{ background: 'var(--surface-2)', boxShadow: 'none' }}>
           <b>{batch.product_name}</b>
-          <div className="cell-sub">Batch {batch.batch_number} · {num(batch.quantity)} {batch.unit} on hand{batch.expiry_date ? ` · expires ${date(batch.expiry_date)}` : ''}</div>
+          <div className="cell-sub">{t('Batch')} {batch.batch_number} · {num(batch.quantity)} {batch.unit} {t('on hand')}{batch.expiry_date ? t(' · expires {0}', [date(batch.expiry_date)]) : ''}</div>
         </div>
         {err && <div className="alert danger">{err.message}</div>}
-        <Segmented block value={mode} onChange={setMode} options={[{ value: 'write_off', label: 'Write off' }, { value: 'count', label: 'Stock count' }]} />
+        <Segmented block value={mode} onChange={setMode} options={[{ value: 'write_off', label: t('Write off') }, { value: 'count', label: t('Stock count') }]} />
         {mode === 'write_off' ? (
           <>
-            <Field label={`Quantity to remove (${batch.unit})`}><input className="input" type="number" step="any" min="0" max={batch.quantity} value={qty} onChange={(e) => setQty(e.target.value)} required autoFocus /></Field>
-            <Field label="Reason">
+            <Field label={t('Quantity to remove ({0})', [batch.unit])}><input className="input" type="number" step="any" min="0" max={batch.quantity} value={qty} onChange={(e) => setQty(e.target.value)} required autoFocus /></Field>
+            <Field label={t('Reason')}>
               <select className="select" value={reason} onChange={(e) => setReason(e.target.value)}>
-                {['Expired', 'Damaged', 'Lost or stolen', 'Returned to supplier', 'Other'].map((r) => <option key={r}>{r}</option>)}
+                {['Expired', 'Damaged', 'Lost or stolen', 'Returned to supplier', 'Other'].map((r) => <option key={r} value={r}>{t(r)}</option>)}
               </select>
             </Field>
           </>
         ) : (
-          <Field label={`Counted quantity (${batch.unit})`} hint="Sets this batch to the number you physically counted."><input className="input" type="number" step="any" min="0" value={counted} onChange={(e) => setCounted(e.target.value)} required autoFocus /></Field>
+          <Field label={t('Counted quantity ({0})', [batch.unit])} hint={t('Sets this batch to the number you physically counted.')}><input className="input" type="number" step="any" min="0" value={counted} onChange={(e) => setCounted(e.target.value)} required autoFocus /></Field>
         )}
-        <Field label="Note (optional)"><input className="input" value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+        <Field label={t('Note (optional)')}><input className="input" value={note} onChange={(e) => setNote(e.target.value)} /></Field>
       </form>
     </Modal>
   );

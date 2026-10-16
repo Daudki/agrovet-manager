@@ -9,8 +9,9 @@ import { useFmt } from '../context/AuthContext.jsx';
 import { api, qs } from '../lib/api.js';
 import { useApi, useDebounced, useDocumentTitle, useOnChange } from '../lib/hooks.js';
 
+import { t } from '../lib/i18n.js';
 export default function Expenses() {
-  useDocumentTitle('Expenses');
+  useDocumentTitle(t('Expenses'));
   const { money, date } = useFmt();
   const toast = useToast();
   const confirm = useConfirm();
@@ -27,39 +28,39 @@ export default function Expenses() {
   const items = data?.items ?? [];
 
   const remove = async (x) => {
-    if (!(await confirm({ title: 'Delete expense?', message: `${x.category} · ${money(x.amount)}`, confirmText: 'Delete', tone: 'danger' }))) return;
-    try { await api.del(`/expenses/${x.id}`); toast.success('Expense deleted'); } catch (e) { toast.error(e.message); }
+    if (!(await confirm({ title: t('Delete expense?'), message: `${t(x.category)} · ${money(x.amount)}`, confirmText: t('Delete'), tone: 'danger' }))) return;
+    try { await api.del(`/expenses/${x.id}`); toast.success(t('Expense deleted')); } catch (e) { toast.error(e.message); }
   };
 
   const cols = [
-    { header: 'Date', first: true, render: (x) => <span className="cell-main">{date(x.spent_on)}</span> },
-    { header: 'Category', render: (x) => x.category },
-    { header: 'Description', render: (x) => <span className="muted">{x.description || '—'}</span> },
-    { header: 'Amount', align: 'right', render: (x) => <b className="num">{money(x.amount)}</b> },
+    { header: t('Date'), first: true, render: (x) => <span className="cell-main">{date(x.spent_on)}</span> },
+    { header: t('Category'), render: (x) => t(x.category) },
+    { header: t('Description'), render: (x) => <span className="muted">{x.description || '—'}</span> },
+    { header: t('Amount'), align: 'right', render: (x) => <b className="num">{money(x.amount)}</b> },
     { header: '', render: (x) => (
       <div className="row-actions">
-        <button className="btn ghost icon sm" onClick={() => setEdit(x)} aria-label="Edit"><Pencil size={15} /></button>
-        <button className="btn ghost icon sm" onClick={() => remove(x)} aria-label="Delete"><Trash2 size={15} /></button>
+        <button className="btn ghost icon sm" onClick={() => setEdit(x)} aria-label={t('Edit')}><Pencil size={15} /></button>
+        <button className="btn ghost icon sm" onClick={() => remove(x)} aria-label={t('Delete')}><Trash2 size={15} /></button>
       </div>) },
   ];
 
   return (
     <>
-      <PageHead title="Expenses" subtitle="Rent, wages, transport and other running costs — deducted from your profit.">
-        <a className="btn" href={`/api/export/expenses.csv${qs(range)}`}><Download size={16} /> Export</a>
-        <button className="btn primary" onClick={() => setEdit({})}><Plus size={16} /> Add expense</button>
+      <PageHead title={t('Expenses')} subtitle={t('Rent, wages, transport and other running costs — deducted from your profit.')}>
+        <a className="btn" href={`/api/export/expenses.csv${qs(range)}`}><Download size={16} /> {t('Export')}</a>
+        <button className="btn primary" onClick={() => setEdit({})}><Plus size={16} /> {t('Add expense')}</button>
       </PageHead>
       <div className="dash-grid" style={{ marginTop: 0 }}>
         <div className="card">
           <div className="toolbar"><DateRange value={range} onChange={setRange} /></div>
           <div className="toolbar">
-            <SearchInput value={search} onChange={setSearch} placeholder="Search description…" />
-            <select className="select" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
-              <option value="">All categories</option>{data?.categories.map((c) => <option key={c}>{c}</option>)}
+            <SearchInput value={search} onChange={setSearch} placeholder={t('Search description…')} />
+            <select className="select" value={category} onChange={(e) => setCategory(e.target.value)} aria-label={t('Category')}>
+              <option value="">{t('All categories')}</option>{data?.categories.map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
           {loading && !data ? <Loading /> : error ? <ErrorState error={error} onRetry={reload} /> : items.length === 0 ? (
-            <Empty icon={Wallet} title="No expenses in this period" action={<button className="btn primary" onClick={() => setEdit({})}>Add expense</button>}>Record running costs so your net profit is accurate.</Empty>
+            <Empty icon={Wallet} title={t('No expenses in this period')} action={<button className="btn primary" onClick={() => setEdit({})}>{t('Add expense')}</button>}>{t('Record running costs so your net profit is accurate.')}</Empty>
           ) : (
             <>
               <DataTable columns={cols} rows={items} />
@@ -68,11 +69,11 @@ export default function Expenses() {
           )}
         </div>
         <div className="card">
-          <div className="card-head"><h3>Total</h3></div>
+          <div className="card-head"><h3>{t('Total')}</h3></div>
           <div className="card-body">
             <div className="kpi"><div className="val" style={{ margin: 0, padding: 0 }}>{money(data?.sum ?? 0)}</div></div>
             <hr className="divider" />
-            {data?.by_category.length ? <HBars items={data.by_category.map((c) => ({ name: c.category, value: c.total }))} format={money} /> : <p className="muted">Nothing to show.</p>}
+            {data?.by_category.length ? <HBars items={data.by_category.map((c) => ({ name: t(c.category), value: c.total }))} format={money} /> : <p className="muted">{t('Nothing to show.')}</p>}
           </div>
         </div>
       </div>
@@ -92,23 +93,23 @@ function ExpenseForm({ expense, categories, onClose }) {
     const body = { ...f, amount: Number(f.amount), ...(f.spent_on ? {} : { spent_on: undefined }) };
     try {
       if (expense) await api.patch(`/expenses/${expense.id}`, body); else await api.post('/expenses', body);
-      toast.success(expense ? 'Expense updated' : 'Expense added'); onClose();
+      toast.success(expense ? t('Expense updated') : t('Expense added')); onClose();
     } catch (ex) { setErr(ex); } finally { setBusy(false); }
   };
   return (
-    <Modal title={expense ? 'Edit expense' : 'Add expense'} size="sm" onClose={onClose}
-      footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" form="ef" disabled={busy}>{busy ? <Spinner /> : 'Save'}</button></>}>
+    <Modal title={expense ? t('Edit expense') : t('Add expense')} size="sm" onClose={onClose}
+      footer={<><button className="btn" onClick={onClose}>{t('Cancel')}</button><button className="btn primary" form="ef" disabled={busy}>{busy ? <Spinner /> : t('Save')}</button></>}>
       <form id="ef" className="stack-v" onSubmit={submit}>
         {err && !err.fields && <div className="alert danger">{err.message}</div>}
-        <Field label="Category" error={err?.fields?.category}>
+        <Field label={t('Category')} error={err?.fields?.category}>
           <input className="input" list="expense-cats" value={f.category} onChange={set('category')} />
           <datalist id="expense-cats">{categories.map((c) => <option key={c} value={c} />)}</datalist>
         </Field>
         <div className="form-grid">
-          <Field label="Amount" error={err?.fields?.amount}><input className="input" type="number" min="0" step="any" value={f.amount} onChange={set('amount')} autoFocus /></Field>
-          <Field label="Date"><input className="input" type="date" value={f.spent_on} onChange={set('spent_on')} /></Field>
+          <Field label={t('Amount')} error={err?.fields?.amount}><input className="input" type="number" min="0" step="any" value={f.amount} onChange={set('amount')} autoFocus /></Field>
+          <Field label={t('Date')}><input className="input" type="date" value={f.spent_on} onChange={set('spent_on')} /></Field>
         </div>
-        <Field label="Description"><input className="input" value={f.description} onChange={set('description')} placeholder="Optional" /></Field>
+        <Field label={t('Description')}><input className="input" value={f.description} onChange={set('description')} placeholder={t('Optional')} /></Field>
       </form>
     </Modal>
   );

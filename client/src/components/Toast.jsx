@@ -6,7 +6,7 @@ let nextId = 1;
 
 export function ToastProvider({ children }) {
   const [items, setItems] = useState([]);
-  const dismiss = useCallback((id) => setItems((s) => s.filter((t) => t.id !== id)), []);
+  const dismiss = useCallback((id) => setItems((s) => s.filter((x) => x.id !== id)), []);
   const push = useCallback((message, tone = 'success') => {
     const id = nextId++;
     setItems((s) => [...s.slice(-3), { id, message, tone }]);
@@ -24,11 +24,11 @@ export function ToastProvider({ children }) {
     <Ctx.Provider value={api}>
       {children}
       <div className="toasts" role="status" aria-live="polite">
-        {items.map((t) => {
-          const I = Icon[t.tone];
+        {items.map((it) => {
+          const I = Icon[it.tone];
           return (
-            <div key={t.id} className={`toast ${t.tone}`} onClick={() => dismiss(t.id)}>
-              <I size={18} /> <span>{t.message}</span>
+            <div key={it.id} className={`toast ${it.tone}`} onClick={() => dismiss(it.id)}>
+              <I size={18} /> <span>{it.message}</span>
             </div>
           );
         })}

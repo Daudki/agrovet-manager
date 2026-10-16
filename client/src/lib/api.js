@@ -1,8 +1,10 @@
+import { localizeData, tServer } from './i18n.js';
+
 export class ApiError extends Error {
   constructor(status, message, details) {
-    super(message);
+    super(tServer(message));
     this.status = status;
-    this.fields = details?.fields ?? {};
+    this.fields = Object.fromEntries(Object.entries(details?.fields ?? {}).map(([k, v]) => [k, tServer(v)]));
   }
 }
 
@@ -39,7 +41,7 @@ async function request(method, path, body) {
     throw new ApiError(res.status, data?.error || res.statusText || 'Request failed', data?.details);
   }
   if (method !== 'GET') window.dispatchEvent(new Event('avm:changed'));
-  return data;
+  return localizeData(data);
 }
 
 export const api = {

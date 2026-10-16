@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api.js';
+import { t, useLocale } from './i18n.js';
 
 /** Fetches `path` whenever params change; refetch on demand with reload(). */
 export function useApi(path, params, { enabled = true } = {}) {
@@ -33,8 +34,8 @@ export function useApi(path, params, { enabled = true } = {}) {
 export function useDebounced(value, ms = 250) {
   const [v, setV] = useState(value);
   useEffect(() => {
-    const t = setTimeout(() => setV(value), ms);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(id);
   }, [value, ms]);
   return v;
 }
@@ -52,9 +53,10 @@ export function useWidth() {
 }
 
 export function useDocumentTitle(title) {
+  const locale = useLocale();
   useEffect(() => {
-    document.title = title ? `${title} · Agrovet Manager` : 'Agrovet Manager';
-  }, [title]);
+    document.title = title ? `${t(title)} · Agrovet Manager` : 'Agrovet Manager';
+  }, [title, locale]);
 }
 
 /** Re-runs fn when any mutation succeeds anywhere in the app. */

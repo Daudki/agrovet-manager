@@ -7,8 +7,9 @@ import { useFmt } from '../context/AuthContext.jsx';
 import { api } from '../lib/api.js';
 import { useApi, useDebounced, useDocumentTitle, useOnChange } from '../lib/hooks.js';
 
+import { t } from '../lib/i18n.js';
 export default function Suppliers() {
-  useDocumentTitle('Suppliers');
+  useDocumentTitle(t('Suppliers'));
   const { money } = useFmt();
   const toast = useToast();
   const confirm = useConfirm();
@@ -20,31 +21,31 @@ export default function Suppliers() {
   const items = data?.items ?? [];
 
   const remove = async (s) => {
-    if (!(await confirm({ title: `Delete ${s.name}?`, message: 'Products and past purchases are kept, just without this supplier link.', confirmText: 'Delete', tone: 'danger' }))) return;
-    try { await api.del(`/suppliers/${s.id}`); toast.success('Supplier deleted'); } catch (e) { toast.error(e.message); }
+    if (!(await confirm({ title: t('Delete {0}?', [s.name]), message: t('Products and past purchases are kept, just without this supplier link.'), confirmText: t('Delete'), tone: 'danger' }))) return;
+    try { await api.del(`/suppliers/${s.id}`); toast.success(t('Supplier deleted')); } catch (e) { toast.error(e.message); }
   };
 
   const cols = [
-    { header: 'Supplier', first: true, render: (s) => <div><div className="cell-main">{s.name}</div><div className="cell-sub">{s.contact_person}</div></div> },
-    { header: 'Contact', render: (s) => <div>{s.phone || '—'}<div className="cell-sub">{s.email}</div></div> },
-    { header: 'Products', align: 'right', render: (s) => s.product_count },
-    { header: 'Total purchased', align: 'right', render: (s) => <span className="num">{money(s.total_purchased)}</span> },
+    { header: t('Supplier'), first: true, render: (s) => <div><div className="cell-main">{s.name}</div><div className="cell-sub">{s.contact_person}</div></div> },
+    { header: t('Contact'), render: (s) => <div>{s.phone || '—'}<div className="cell-sub">{s.email}</div></div> },
+    { header: t('Products'), align: 'right', render: (s) => s.product_count },
+    { header: t('Total purchased'), align: 'right', render: (s) => <span className="num">{money(s.total_purchased)}</span> },
     { header: '', render: (s) => (
       <div className="row-actions">
-        <button className="btn ghost icon sm" onClick={() => setEdit(s)} aria-label="Edit"><Pencil size={15} /></button>
-        <button className="btn ghost icon sm" onClick={() => remove(s)} aria-label="Delete"><Trash2 size={15} /></button>
+        <button className="btn ghost icon sm" onClick={() => setEdit(s)} aria-label={t('Edit')}><Pencil size={15} /></button>
+        <button className="btn ghost icon sm" onClick={() => remove(s)} aria-label={t('Delete')}><Trash2 size={15} /></button>
       </div>) },
   ];
 
   return (
     <>
-      <PageHead title="Suppliers" subtitle="Who you buy from, and how much.">
-        <button className="btn primary" onClick={() => setEdit({})}><Plus size={16} /> Add supplier</button>
+      <PageHead title={t('Suppliers')} subtitle={t('Who you buy from, and how much.')}>
+        <button className="btn primary" onClick={() => setEdit({})}><Plus size={16} /> {t('Add supplier')}</button>
       </PageHead>
       <div className="card">
-        <div className="toolbar"><SearchInput value={search} onChange={setSearch} placeholder="Search suppliers…" /></div>
+        <div className="toolbar"><SearchInput value={search} onChange={setSearch} placeholder={t('Search suppliers…')} /></div>
         {loading && !data ? <Loading /> : error ? <ErrorState error={error} onRetry={reload} /> : items.length === 0 ? (
-          <Empty icon={Truck} title="No suppliers yet" action={<button className="btn primary" onClick={() => setEdit({})}>Add supplier</button>}>Link suppliers to products and purchases to track who you buy from.</Empty>
+          <Empty icon={Truck} title={t('No suppliers yet')} action={<button className="btn primary" onClick={() => setEdit({})}>{t('Add supplier')}</button>}>{t('Link suppliers to products and purchases to track who you buy from.')}</Empty>
         ) : <DataTable columns={cols} rows={items} onRowClick={setEdit} />}
       </div>
       {edit && <SupplierForm supplier={edit.id ? edit : null} onClose={() => setEdit(null)} />}
@@ -62,20 +63,20 @@ function SupplierForm({ supplier, onClose }) {
     e.preventDefault(); setBusy(true); setErr(null);
     try {
       if (supplier) await api.patch(`/suppliers/${supplier.id}`, f); else await api.post('/suppliers', f);
-      toast.success(supplier ? 'Supplier updated' : 'Supplier added'); onClose();
+      toast.success(supplier ? t('Supplier updated') : t('Supplier added')); onClose();
     } catch (ex) { setErr(ex); } finally { setBusy(false); }
   };
   return (
-    <Modal title={supplier ? 'Edit supplier' : 'Add supplier'} onClose={onClose}
-      footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" form="sf" disabled={busy}>{busy ? <Spinner /> : 'Save'}</button></>}>
+    <Modal title={supplier ? t('Edit supplier') : t('Add supplier')} onClose={onClose}
+      footer={<><button className="btn" onClick={onClose}>{t('Cancel')}</button><button className="btn primary" form="sf" disabled={busy}>{busy ? <Spinner /> : t('Save')}</button></>}>
       <form id="sf" className="form-grid" onSubmit={submit}>
         {err && !err.fields && <div className="alert danger full">{err.message}</div>}
-        <Field label="Company name" className="full" error={err?.fields?.name}><input className="input" value={f.name} onChange={set('name')} autoFocus /></Field>
-        <Field label="Contact person"><input className="input" value={f.contact_person} onChange={set('contact_person')} /></Field>
-        <Field label="Phone"><input className="input" value={f.phone} onChange={set('phone')} /></Field>
-        <Field label="Email" className="full" error={err?.fields?.email}><input className="input" type="email" value={f.email} onChange={set('email')} /></Field>
-        <Field label="Address" className="full"><input className="input" value={f.address} onChange={set('address')} /></Field>
-        <Field label="Notes" className="full"><textarea className="textarea" rows={2} value={f.notes} onChange={set('notes')} /></Field>
+        <Field label={t('Company name')} className="full" error={err?.fields?.name}><input className="input" value={f.name} onChange={set('name')} autoFocus /></Field>
+        <Field label={t('Contact person')}><input className="input" value={f.contact_person} onChange={set('contact_person')} /></Field>
+        <Field label={t('Phone')}><input className="input" value={f.phone} onChange={set('phone')} /></Field>
+        <Field label={t('Email')} className="full" error={err?.fields?.email}><input className="input" type="email" value={f.email} onChange={set('email')} /></Field>
+        <Field label={t('Address')} className="full"><input className="input" value={f.address} onChange={set('address')} /></Field>
+        <Field label={t('Notes')} className="full"><textarea className="textarea" rows={2} value={f.notes} onChange={set('notes')} /></Field>
       </form>
     </Modal>
   );

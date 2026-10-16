@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
+import { t } from '../lib/i18n.js';
 function useLockAndEsc(onClose) {
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -24,7 +25,7 @@ export function Modal({ title, onClose, children, footer, size = '', dismissible
       <div className={`modal ${size}`} role="dialog" aria-modal="true" aria-label={title} ref={ref}>
         <div className="modal-head">
           <h3>{title}</h3>
-          <button className="btn ghost icon sm" onClick={onClose} aria-label="Close"><X size={18} /></button>
+          <button className="btn ghost icon sm" onClick={onClose} aria-label={t('Close')}><X size={18} /></button>
         </div>
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-foot">{footer}</div>}
@@ -45,7 +46,7 @@ export function Drawer({ title, subtitle, onClose, children, actions }) {
             {subtitle && <div className="muted" style={{ marginTop: 2 }}>{subtitle}</div>}
           </div>
           {actions}
-          <button className="btn ghost icon sm" onClick={onClose} aria-label="Close"><X size={18} /></button>
+          <button className="btn ghost icon sm" onClick={onClose} aria-label={t('Close')}><X size={18} /></button>
         </div>
         <div className="drawer-body">{children}</div>
       </aside>
@@ -73,13 +74,13 @@ export function ConfirmProvider({ children }) {
       {state && (
         <Modal
           size="sm"
-          title={state.title || 'Are you sure?'}
+          title={state.title || t('Are you sure?')}
           onClose={() => close(false)}
           footer={
             <>
-              <button className="btn" onClick={() => close(false)}>{state.cancelText || 'Cancel'}</button>
+              <button className="btn" onClick={() => close(false)}>{state.cancelText || t('Cancel')}</button>
               <button className={`btn ${state.tone === 'danger' ? 'danger' : 'primary'}`} onClick={() => close(state.input ? text.trim() : true)}>
-                {state.confirmText || 'Confirm'}
+                {state.confirmText || t('Confirm')}
               </button>
             </>
           }

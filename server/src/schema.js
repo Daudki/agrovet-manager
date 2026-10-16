@@ -204,4 +204,27 @@ export const MIGRATIONS = [
   );
   CREATE INDEX ix_expenses_account ON expenses(account_id, spent_on);
   `,
+
+  // Migration 2 – staff accounts with roles. Login identities move to `users`.
+  // (accounts.email / password_hash / token_version are kept for compatibility but no longer used for login.)
+  `
+  CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('owner','manager','cashier')),
+    is_active INTEGER NOT NULL DEFAULT 1,
+    token_version INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX ix_users_account ON users(account_id);
+
+  INSERT INTO users (account_id, email, password_hash, name, role, token_version, created_at)
+    SELECT id, email, password_hash, owner_name, 'owner', token_version, created_at FROM accounts;
+
+  ALTER TABLE sales ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+  CREATE INDEX ix_sales_user ON sales(user_id);
+  `,
 ];

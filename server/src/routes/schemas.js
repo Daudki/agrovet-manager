@@ -128,3 +128,16 @@ export const expense = z.object({
   spent_on: date.optional(),
 });
 export const expensePatch = expense.partial();
+
+export const teamMember = z.object({
+  name: text(80).min(2, 'Enter a name'),
+  email: z.string().trim().toLowerCase().email('Enter a valid email').max(160),
+  password: z.string().min(8, 'Use at least 8 characters').max(100),
+  role: z.enum(['manager', 'cashier']),
+});
+export const teamPatch = z.object({
+  name: text(80).min(2),
+  role: z.enum(['manager', 'cashier']),
+  is_active: z.boolean(),
+  password: z.string().min(8, 'Use at least 8 characters').max(100),
+}).partial();

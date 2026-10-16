@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
-import { unauthorized } from '../errors.js';
-import { getAccount } from '../services/accounts.js';
+import { forbidden, unauthorized } from '../errors.js';
+import { can } from '../permissions.js';
+import { getAccount, getUser } from '../services/accounts.js';
 
 function readCookie(req, name) {
   const header = req.headers.cookie;
@@ -19,9 +20,17 @@ function readCookie(req, name) {
   return null;
 }
 
-export function issueSession(res, account) {
-  const token = jwt.sign({ tv: account.token_version }, config.jwtSecret, {
-    subject: String(account.id),
+const cookieOptions = () => ({
+  httpOnly: true,
+  sameSite: 'lax',
+  secure: config.cookieSecure,
+  path: '/',
+  maxAge: config.sessionDays * 86400 * 1000,
+});
+
+export function issueSession(res, user) {
+  const token = jwt.sign({ tv: user.token_version }, config.jwtSecret, {
+    subject: String(user.id),
     expiresIn: `${config.sessionDays}d`,
   });
   res.cookie(config.cookieName, token, cookieOptions());
@@ -29,25 +38,26 @@ export function issueSession(res, account) {
 
 export const clearSession = (res) => res.clearCookie(config.cookieName, cookieOptions());
 
-const cookieOptions = () => ({
-  httpOnly: true,
-  sameSite: 'lax',
-  secure: config.cookieSecure,
-  path: '/',
-  /**maxAge: config.sessionDays * 86400 * 1000,**/
-});
-
-/** Resolves the logged-in account into req.acct. Every service call is scoped by it. */
+/** Resolves the signed-in login into req.user and its shop into req.acct. Every service call is scoped by req.acct. */
 export function requireAuth(req, _res, next) {
   const token = readCookie(req, config.cookieName);
   if (!token) return next(unauthorized());
   try {
     const payload = jwt.verify(token, config.jwtSecret);
-    const acct = getAccount(Number(payload.sub));
-    if (!acct || acct.token_version !== payload.tv) return next(unauthorized('Session expired. Please sign in again.'));
+    const user = getUser(Number(payload.sub));
+    if (!user || !user.is_active || user.token_version !== payload.tv) {
+      return next(unauthorized('Session expired. Please sign in again.'));
+    }
+    const acct = getAccount(user.account_id);
+    if (!acct) return next(unauthorized());
+    req.user = user;
     req.acct = acct;
     next();
   } catch {
     next(unauthorized('Session expired. Please sign in again.'));
   }
 }
+
+/** Route guard: `need('sales.void')`. */
+export const need = (perm) => (req, _res, next) =>
+  can(req.user.role, perm) ? next() : next(forbidden());

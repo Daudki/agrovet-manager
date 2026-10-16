@@ -398,3 +398,10 @@ img, svg { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
 @media (max-width: 560px) { .hide-sm { display: none; } .topbar .btn.primary { width: 38px; padding: 0; } }
+.lang-switch { flex: none; }
+.lang-switch button { padding: 5px 9px; }
+@media (max-width: 560px) { .topbar .lang-switch svg { display: none; } }
+
+.sb-user .avatar { flex: none; }
+.sb-me { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; color: inherit; border-radius: 9px; padding: 4px; margin: -4px; }
+.sb-me:hover { background: rgba(255, 255, 255, .06); text-decoration: none; }

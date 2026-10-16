@@ -8,19 +8,20 @@ import { useFmt } from '../context/AuthContext.jsx';
 import { MOVEMENT_LABELS } from '../lib/format.js';
 import { useApi, useDebounced, useDocumentTitle, useOnChange } from '../lib/hooks.js';
 
+import { t } from '../lib/i18n.js';
 const TABS = [
   { value: 'expired', label: 'Expired' }, { value: 'expiring', label: 'Expiring soon' },
   { value: 'active', label: 'All active batches' }, { value: 'ledger', label: 'Stock ledger' },
 ];
 
 export default function Stock() {
-  useDocumentTitle('Batches & expiry');
+  useDocumentTitle(t('Batches & expiry'));
   const [sp, setSp] = useSearchParams();
-  const tab = TABS.some((t) => t.value === sp.get('tab')) ? sp.get('tab') : 'expiring';
-  const setTab = (t) => setSp({ tab: t }, { replace: true });
+  const tab = TABS.some((x) => x.value === sp.get('tab')) ? sp.get('tab') : 'expiring';
+  const setTab = (tabValue) => setSp({ tab: tabValue }, { replace: true });
   return (
     <>
-      <PageHead title="Batches & expiry" subtitle="Know exactly what’s on your shelves, what’s about to expire, and every movement in and out." />
+      <PageHead title={t('Batches & expiry')} subtitle={t('Know exactly what’s on your shelves, what’s about to expire, and every movement in and out.')} />
       <Tabs value={tab} onChange={setTab} tabs={TABS} />
       {tab === 'ledger' ? <Ledger /> : <Batches key={tab} status={tab} />}
     </>
@@ -39,19 +40,19 @@ function Batches({ status }) {
   const items = data?.items ?? [];
 
   const cols = [
-    { header: 'Product', first: true, render: (b) => <div><div className="cell-main">{b.product_name}</div><div className="cell-sub">Batch {b.batch_number}{b.supplier_name ? ` · ${b.supplier_name}` : ''}</div></div> },
-    { header: 'On hand', align: 'right', render: (b) => <span className="num"><b>{num(b.quantity)}</b> {b.unit}</span> },
-    { header: 'Expiry', render: (b) => <div><ExpiryBadge status={b.expiry_status} days={b.days_left} />{b.expiry_date && <div className="cell-sub">{date(b.expiry_date)}</div>}</div> },
-    { header: 'Value at cost', align: 'right', render: (b) => <span className="num">{money(b.quantity * b.cost_price)}</span> },
-    { header: '', render: (b) => <div className="row-actions"><button className="btn sm" onClick={(e) => { e.stopPropagation(); setAdjust(b); }}><ClipboardEdit size={14} /> Adjust</button></div> },
+    { header: t('Product'), first: true, render: (b) => <div><div className="cell-main">{b.product_name}</div><div className="cell-sub">{t('Batch')} {b.batch_number}{b.supplier_name ? ` · ${b.supplier_name}` : ''}</div></div> },
+    { header: t('On hand'), align: 'right', render: (b) => <span className="num"><b>{num(b.quantity)}</b> {b.unit}</span> },
+    { header: t('Expiry'), render: (b) => <div><ExpiryBadge status={b.expiry_status} days={b.days_left} />{b.expiry_date && <div className="cell-sub">{date(b.expiry_date)}</div>}</div> },
+    { header: t('Value at cost'), align: 'right', render: (b) => <span className="num">{money(b.quantity * b.cost_price)}</span> },
+    { header: '', render: (b) => <div className="row-actions"><button className="btn sm" onClick={(e) => { e.stopPropagation(); setAdjust(b); }}><ClipboardEdit size={14} /> {t('Adjust')}</button></div> },
   ];
 
   return (
     <div className="card">
-      <div className="toolbar"><SearchInput value={search} onChange={setSearch} placeholder="Search product or batch number…" /></div>
+      <div className="toolbar"><SearchInput value={search} onChange={setSearch} placeholder={t('Search product or batch number…')} /></div>
       {loading && !data ? <Loading /> : error ? <ErrorState error={error} onRetry={reload} /> : items.length === 0 ? (
-        <Empty icon={Boxes} title={status === 'expired' ? 'No expired stock' : status === 'expiring' ? 'Nothing expiring soon' : 'No batches yet'}>
-          {status === 'active' ? 'Receive stock to create batches.' : 'Great — nothing needs your attention here.'}
+        <Empty icon={Boxes} title={status === 'expired' ? t('No expired stock') : status === 'expiring' ? t('Nothing expiring soon') : t('No batches yet')}>
+          {status === 'active' ? t('Receive stock to create batches.') : t('Great — nothing needs your attention here.')}
         </Empty>
       ) : (
         <>
@@ -75,25 +76,25 @@ function Ledger() {
   const items = data?.items ?? [];
 
   const cols = [
-    { header: 'Date', first: true, render: (m) => <span className="num">{m.created_on}</span> },
-    { header: 'Product', render: (m) => <div><div className="cell-main">{m.product_name}</div>{m.batch_number && <div className="cell-sub">Batch {m.batch_number}</div>}</div> },
-    { header: 'Type', render: (m) => MOVEMENT_LABELS[m.type] },
-    { header: 'Quantity', align: 'right', render: (m) => <b className="num" style={{ color: m.quantity < 0 ? 'var(--danger)' : 'var(--ok)' }}>{m.quantity > 0 ? '+' : ''}{num(m.quantity)} {m.unit}</b> },
-    { header: 'Unit cost', align: 'right', render: (m) => <span className="num">{money(m.unit_cost)}</span> },
-    { header: 'Note', render: (m) => <span className="muted">{m.note || '—'}</span> },
+    { header: t('Date'), first: true, render: (m) => <span className="num">{m.created_on}</span> },
+    { header: t('Product'), render: (m) => <div><div className="cell-main">{m.product_name}</div>{m.batch_number && <div className="cell-sub">{t('Batch')} {m.batch_number}</div>}</div> },
+    { header: t('Type'), render: (m) => MOVEMENT_LABELS[m.type] },
+    { header: t('Quantity'), align: 'right', render: (m) => <b className="num" style={{ color: m.quantity < 0 ? 'var(--danger)' : 'var(--ok)' }}>{m.quantity > 0 ? '+' : ''}{num(m.quantity)} {m.unit}</b> },
+    { header: t('Unit cost'), align: 'right', render: (m) => <span className="num">{money(m.unit_cost)}</span> },
+    { header: t('Note'), render: (m) => <span className="muted">{m.note || '—'}</span> },
   ];
 
   return (
     <div className="card">
       <div className="toolbar">
         <DateRange value={range} onChange={setRange} />
-        <select className="select" value={type} onChange={(e) => setType(e.target.value)} aria-label="Movement type">
-          <option value="">All movements</option>{Object.entries(MOVEMENT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        <select className="select" value={type} onChange={(e) => setType(e.target.value)} aria-label={t('Movement type')}>
+          <option value="">{t('All movements')}</option>{Object.entries(MOVEMENT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <a className="btn sm" href="/api/export/movements.csv"><Download size={14} /> Export</a>
+        <a className="btn sm" href="/api/export/movements.csv"><Download size={14} /> {t('Export')}</a>
       </div>
       {loading && !data ? <Loading /> : error ? <ErrorState error={error} onRetry={reload} /> : items.length === 0 ? (
-        <Empty icon={Boxes} title="No movements">Every purchase, sale, adjustment and write-off is logged here.</Empty>
+        <Empty icon={Boxes} title={t('No movements')}>{t('Every purchase, sale, adjustment and write-off is logged here.')}</Empty>
       ) : (
         <>
           <DataTable columns={cols} rows={items} />

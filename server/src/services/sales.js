@@ -83,11 +83,11 @@ export function createSale(acct, input, opts = {}) {
       db
         .prepare(
           `INSERT INTO sales (account_id, receipt_no, customer_id, subtotal, discount, total, cost_total, amount_paid,
-             payment_method, note, sold_on, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             payment_method, note, sold_on, created_at, user_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(acct.id, receiptNo, input.customer_id ?? null, subtotal, discount, total, costTotal, paid, method,
-          input.note ?? '', soldOn, createdAt).lastInsertRowid,
+          input.note ?? '', soldOn, createdAt, opts.userId ?? null).lastInsertRowid,
     );
 
     const insItem = db.prepare(
@@ -114,8 +114,8 @@ export function createSale(acct, input, opts = {}) {
 export function getSale(acct, id) {
   const sale = db
     .prepare(
-      `SELECT s.*, c.name AS customer_name, c.phone AS customer_phone
-       FROM sales s LEFT JOIN customers c ON c.id = s.customer_id
+      `SELECT s.*, c.name AS customer_name, c.phone AS customer_phone, u.name AS served_by
+       FROM sales s LEFT JOIN customers c ON c.id = s.customer_id LEFT JOIN users u ON u.id = s.user_id
        WHERE s.id = ? AND s.account_id = ?`,
     )
     .get(id, acct.id);
@@ -134,6 +134,7 @@ export function listSales(acct, q = {}) {
   if (q.status) { where += ' AND s.status = ?'; params.push(q.status); }
   if (q.payment_method) { where += ' AND s.payment_method = ?'; params.push(q.payment_method); }
   if (q.customer_id) { where += ' AND s.customer_id = ?'; params.push(Number(q.customer_id)); }
+  if (q.user_id) { where += ' AND s.user_id = ?'; params.push(Number(q.user_id)); }
   if (q.unpaid) where += " AND s.status = 'completed' AND s.total - s.amount_paid > 0.005";
   if (q.search) {
     where += " AND (s.receipt_no LIKE ? ESCAPE '\\' OR c.name LIKE ? ESCAPE '\\')";
@@ -141,7 +142,7 @@ export function listSales(acct, q = {}) {
     params.push(t, t);
   }
   const pg = paging(q, 25);
-  const from = `FROM sales s LEFT JOIN customers c ON c.id = s.customer_id ${where}`;
+  const from = `FROM sales s LEFT JOIN customers c ON c.id = s.customer_id LEFT JOIN users u ON u.id = s.user_id ${where}`;
   const agg = db
     .prepare(
       `SELECT COUNT(*) AS n,
@@ -153,7 +154,7 @@ export function listSales(acct, q = {}) {
   const items = db
     .prepare(
       `SELECT s.id, s.receipt_no, s.total, s.discount, s.amount_paid, s.cost_total, s.payment_method, s.status, s.sold_on,
-              s.created_at, c.name AS customer_name,
+              s.created_at, c.name AS customer_name, u.name AS served_by, s.user_id,
               (SELECT COUNT(*) FROM sale_items i WHERE i.sale_id = s.id) AS item_count
        ${from} ORDER BY s.id DESC LIMIT ${pg.limit} OFFSET ${pg.offset}`,
     )

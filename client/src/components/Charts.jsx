@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useWidth } from '../lib/hooks.js';
 
+import { t } from '../lib/i18n.js';
 const niceMax = (v) => {
   if (v <= 0) return 1;
   const p = 10 ** Math.floor(Math.log10(v));
@@ -55,12 +56,12 @@ export function AreaChart({ data, series, height = 240, formatValue = String, fo
                 </linearGradient>
               ))}
             </defs>
-            {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-              const yy = geo.y(geo.max * t);
+            {[0, 0.25, 0.5, 0.75, 1].map((q) => {
+              const yy = geo.y(geo.max * q);
               return (
-                <g key={t}>
-                  <line x1={pad.l} x2={width - pad.r} y1={yy} y2={yy} stroke="var(--border)" strokeDasharray={t === 0 ? '' : '3 4'} />
-                  <text x={pad.l - 8} y={yy + 4} textAnchor="end">{formatValue(geo.max * t, true)}</text>
+                <g key={q}>
+                  <line x1={pad.l} x2={width - pad.r} y1={yy} y2={yy} stroke="var(--border)" strokeDasharray={q === 0 ? '' : '3 4'} />
+                  <text x={pad.l - 8} y={yy + 4} textAnchor="end">{formatValue(geo.max * q, true)}</text>
                 </g>
               );
             })}
@@ -97,7 +98,7 @@ export function Donut({ items, format, size = 150, centerLabel }) {
   let offset = 0;
   return (
     <div className="donut-wrap">
-      <svg width={size} height={size} viewBox="0 0 140 140" role="img" aria-label="Breakdown">
+      <svg width={size} height={size} viewBox="0 0 140 140" role="img" aria-label={t('Breakdown')}>
         <circle cx="70" cy="70" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="18" />
         {total > 0 && items.map((it) => {
           const len = (it.value / total) * c;
