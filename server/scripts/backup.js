@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DatabaseSync } from 'node:sqlite';
+import Database from 'better-sqlite3';
 
 // Same database location rules as the app (see server/src/config.js), without needing JWT_SECRET.
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -29,7 +29,7 @@ fs.mkdirSync(outDir, { recursive: true });
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
 const target = path.join(outDir, `agrovet-${stamp}.db`);
 
-const db = new DatabaseSync(config.databasePath);
+const db = new Database(config.databasePath);
 try {
   db.exec('PRAGMA busy_timeout = 10000');
   db.exec(`VACUUM INTO '${target.replace(/'/g, "''")}'`); // consistent snapshot, including anything still in the WAL

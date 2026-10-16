@@ -3,7 +3,7 @@
 Inventory, sales and expiry management built specifically for agrovet shops (agricultural inputs and veterinary supplies).
 Multi-tenant: every shop registers its own account and only ever sees its own data.
 
-**Stack:** React 18 + Vite (client) · Node.js + Express (API) · SQLite (built-in `node:sqlite`, no native build step).
+**Stack:** React 18 + Vite (client) · Node.js + Express (API) · SQLite (`better-sqlite3`).
 
 ## Features
 

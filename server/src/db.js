@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import Database from 'better-sqlite3';
 import { MIGRATIONS } from './schema.js';
 
 /** Shared connection (live binding). Call initDb() once at startup (or per test). */
@@ -10,7 +10,7 @@ let depth = 0;
 
 export function initDb(file = ':memory:') {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
-  const conn = new DatabaseSync(file);
+  const conn = new Database(file);
   conn.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
   const current = conn.prepare('PRAGMA user_version').get().user_version;
   for (let i = current; i < MIGRATIONS.length; i++) {
