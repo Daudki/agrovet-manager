@@ -43,7 +43,6 @@ Open the app, choose **Create your shop account**, and tick *Load sample data* t
 
 ### Production
 
-See **[DEPLOY.md](DEPLOY.md)** for a step-by-step guide (Render or your own server), backups and a go-live checklist.
 
 ```bash
 npm run build               # builds client/dist
