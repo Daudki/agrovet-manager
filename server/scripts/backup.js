@@ -2,8 +2,10 @@
 //   npm run backup                       → server/backups/agrovet-YYYYMMDD-HHMMSS.db
 //   npm run backup -- /path/to/folder    → custom folder
 //   KEEP=30 npm run backup               → keep the newest 30 copies (default 14)
+//   BACKUP_S3_BUCKET=...                 → also upload a gzipped copy to S3-compatible storage (see .env.example)
 // Restore: stop the app, then copy a backup over the file named in DATABASE_PATH.
 import fs from 'node:fs';
+import zlib from 'node:zlib';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
@@ -44,4 +46,47 @@ const old = fs.readdirSync(outDir).filter((f) => /^agrovet-\d{8}-\d{6}\.db$/.tes
 for (const f of old) {
   fs.unlinkSync(path.join(outDir, f));
   console.log(`Removed old backup: ${f}`);
+}
+
+const bucket = process.env.BACKUP_S3_BUCKET;
+if (bucket) {
+  const prefix = process.env.BACKUP_S3_PREFIX ?? 'agrovet/';
+  const keepRemote = Math.max(Number(process.env.KEEP_REMOTE) || 30, 1);
+  const { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } = await import('@aws-sdk/client-s3');
+  const client = new S3Client({
+    region: process.env.BACKUP_S3_REGION || 'auto',
+    endpoint: process.env.BACKUP_S3_ENDPOINT || undefined,
+    forcePathStyle: process.env.BACKUP_S3_PATH_STYLE === 'true',
+    credentials: {
+      accessKeyId: process.env.BACKUP_S3_ACCESS_KEY_ID ?? '',
+      secretAccessKey: process.env.BACKUP_S3_SECRET_ACCESS_KEY ?? '',
+    },
+  });
+  try {
+    const key = `${prefix}${path.basename(target)}.gz`;
+    await client.send(new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: zlib.gzipSync(fs.readFileSync(target)),
+      ContentType: 'application/gzip',
+    }));
+    console.log(`Uploaded: s3://${bucket}/${key}`);
+
+    const keys = [];
+    let token;
+    do {
+      const page = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token }));
+      for (const item of page.Contents ?? []) keys.push(item.Key);
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
+
+    const stale = keys.filter((k) => /agrovet-\d{8}-\d{6}\.db\.gz$/.test(k)).sort().reverse().slice(keepRemote);
+    if (stale.length) {
+      await client.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: stale.map((Key) => ({ Key })), Quiet: true } }));
+      console.log(`Removed ${stale.length} old remote backup(s)`);
+    }
+  } catch (err) {
+    console.error(`Off-site upload failed: ${err.message}`);
+    process.exit(2);
+  }
 }
