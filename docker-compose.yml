@@ -1,0 +1,72 @@
+x-app: &app
+  build: .
+  image: agrovet-manager:local
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    - data:/data
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  app:
+    <<: *app
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
+      NODE_ENV: production
+      DATABASE_PATH: /data/agrovet.db
+      TRUST_PROXY: "1"
+    expose:
+      - "4000"
+    stop_grace_period: 20s
+
+  backup:
+    <<: *app
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      DATABASE_PATH: /data/agrovet.db
+      KEEP: ${KEEP:-28}
+      KEEP_REMOTE: ${KEEP_REMOTE:-120}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-21600}
+    healthcheck:
+      disable: true
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          node server/scripts/backup.js /data/backups || echo "backup failed"
+          sleep "$${BACKUP_INTERVAL_SECONDS}"
+        done
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env (the domain that points at this server)}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  data:
+  caddy_data:
+  caddy_config:
