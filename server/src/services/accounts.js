@@ -20,7 +20,7 @@ export const DEFAULT_CATEGORIES = [
 export const publicAccount = (a) => {
   if (!a) return null;
   // eslint-disable-next-line no-unused-vars
-  const { password_hash, token_version, next_receipt, email, ...rest } = a;
+  const { password_hash, token_version, next_receipt, email, suspended_at, ...rest } = a;
   return rest;
 };
 

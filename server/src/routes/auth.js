@@ -3,7 +3,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { config } from '../config.js';
 import { conflict, unauthorized } from '../errors.js';
-import { clearSession, issueSession, need, requireAuth } from '../middleware/auth.js';
+import { clearSession, issueSession, need, requireAuth, SUSPENDED } from '../middleware/auth.js';
 import { permissionsFor } from '../permissions.js';
 import {
   createAccount, createTeamMember, deleteTeamMember, getAccount, getUserByEmail, listTeam, publicAccount, publicUser,
@@ -52,8 +52,10 @@ authRouter.post('/login', limiter, ah(async (req, res) => {
   const ok = await bcrypt.compare(data.password, user?.password_hash ?? DUMMY_HASH);
   if (!user || !ok) throw unauthorized('Invalid email or password');
   if (!user.is_active) throw unauthorized('This login has been deactivated. Ask the shop owner.');
+  const acct = getAccount(user.account_id);
+  if (acct?.suspended_at) throw unauthorized(SUSPENDED);
   issueSession(res, user);
-  res.json(session({ user, acct: getAccount(user.account_id) }));
+  res.json(session({ user, acct }));
 }));
 
 authRouter.post('/logout', (_req, res) => {

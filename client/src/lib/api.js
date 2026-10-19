@@ -35,7 +35,9 @@ async function request(method, path, body) {
     try { data = JSON.parse(text); } catch { /* non-JSON */ }
   }
   if (!res.ok) {
-    if (res.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/register')) {
+    if (res.status === 401 && path.startsWith('/admin')) {
+      if (!path.startsWith('/admin/login')) window.dispatchEvent(new Event('avm:admin-unauthorized'));
+    } else if (res.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/register')) {
       window.dispatchEvent(new Event('avm:unauthorized'));
     }
     throw new ApiError(res.status, data?.error || res.statusText || 'Request failed', data?.details);

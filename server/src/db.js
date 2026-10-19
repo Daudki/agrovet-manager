@@ -29,6 +29,10 @@ export function initDb(file = ':memory:') {
   return conn;
 }
 
+export function snapshotTo(file) {
+  db.exec(`VACUUM INTO '${file.replace(/'/g, "''")}'`);
+}
+
 /** Runs fn inside a write transaction. Re-entrant: nested calls join the outer one. */
 export function tx(fn) {
   if (depth > 0) return fn();

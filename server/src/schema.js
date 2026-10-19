@@ -227,4 +227,8 @@ export const MIGRATIONS = [
   ALTER TABLE sales ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
   CREATE INDEX ix_sales_user ON sales(user_id);
   `,
+
+  `
+  ALTER TABLE accounts ADD COLUMN suspended_at TEXT;
+  `,
 ];

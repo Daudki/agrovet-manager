@@ -23,6 +23,15 @@ if (!jwtSecret) {
   console.warn('[config] JWT_SECRET not set – using a random one. Sessions reset on every restart.');
 }
 
+const adminEmail = (env.ADMIN_EMAIL ?? '').trim().toLowerCase();
+const adminPasswordHash = (env.ADMIN_PASSWORD_HASH ?? '').trim();
+if (Boolean(adminEmail) !== Boolean(adminPasswordHash)) {
+  throw new Error('Set both ADMIN_EMAIL and ADMIN_PASSWORD_HASH, or neither.');
+}
+if (adminPasswordHash && !/^\$2[aby]\$\d{2}\$.{53}$/.test(adminPasswordHash)) {
+  throw new Error('ADMIN_PASSWORD_HASH must be a bcrypt hash. Generate one with: npm run admin:hash');
+}
+
 export const config = {
   isProd,
   port: Number(env.PORT) || 4000,
@@ -34,5 +43,10 @@ export const config = {
   sessionDays: Number(env.SESSION_DAYS) || 7,
   cookieSecure: env.COOKIE_SECURE ? env.COOKIE_SECURE === 'true' : isProd,
   trustProxy: env.TRUST_PROXY ? Number(env.TRUST_PROXY) : isProd ? 1 : 0,
+  adminEmail,
+  adminPasswordHash,
+  adminEnabled: Boolean(adminEmail),
+  adminCookieName: 'avm_admin',
+  adminSessionHours: Number(env.ADMIN_SESSION_HOURS) || 12,
   clientDist: path.join(root, 'client', 'dist'),
 };

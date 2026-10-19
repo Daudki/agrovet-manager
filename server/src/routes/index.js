@@ -4,6 +4,7 @@ import { need, requireAuth } from '../middleware/auth.js';
 import { can } from '../permissions.js';
 import * as redact from '../redact.js';
 import * as S from './schemas.js';
+import { adminRouter } from './admin.js';
 import { accountRouter, authRouter, teamRouter } from './auth.js';
 import * as categories from '../services/categories.js';
 import * as customers from '../services/customers.js';
@@ -40,6 +41,7 @@ api.use((req, _res, next) => {
 });
 
 api.use('/auth', authRouter);
+api.use('/admin', adminRouter);
 api.use(requireAuth); // everything below is private to the signed-in login
 api.use('/account', accountRouter);
 api.use('/team', teamRouter);

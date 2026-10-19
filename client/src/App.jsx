@@ -24,6 +24,9 @@ const Reports = lazy(() => import('./pages/Reports.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
 const Team = lazy(() => import('./pages/Team.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
+const AdminGate = lazy(() => import('./pages/admin/AdminGate.jsx'));
+const AdminShops = lazy(() => import('./pages/admin/AdminShops.jsx'));
+const AdminShop = lazy(() => import('./pages/admin/AdminShop.jsx'));
 
 function Protected() {
   const { account, loading } = useAuth();
@@ -57,6 +60,10 @@ export default function App() {
   // Keying on the language remounts the pages so every string is re-translated.
   return (
     <Routes key={locale}>
+      <Route path="/admin" element={<Suspense fallback={<Loading />}><AdminGate /></Suspense>}>
+        <Route index element={<AdminShops />} />
+        <Route path="shops/:id" element={<AdminShop />} />
+      </Route>
       <Route element={<Public />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

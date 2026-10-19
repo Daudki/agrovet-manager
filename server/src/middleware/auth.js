@@ -4,7 +4,7 @@ import { forbidden, unauthorized } from '../errors.js';
 import { can } from '../permissions.js';
 import { getAccount, getUser } from '../services/accounts.js';
 
-function readCookie(req, name) {
+export function readCookie(req, name) {
   const header = req.headers.cookie;
   if (!header) return null;
   for (const part of header.split(';')) {
@@ -19,6 +19,8 @@ function readCookie(req, name) {
   }
   return null;
 }
+
+export const SUSPENDED = 'This shop has been suspended. Please contact support.';
 
 // Attributes that must match between setting and clearing a cookie, or the browser keeps the old one.
 export const cookieBase = () => ({
@@ -51,6 +53,7 @@ export function requireAuth(req, _res, next) {
     }
     const acct = getAccount(user.account_id);
     if (!acct) return next(unauthorized());
+    if (acct.suspended_at) return next(unauthorized(SUSPENDED));
     req.user = user;
     req.acct = acct;
     next();
